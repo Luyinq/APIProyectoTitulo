@@ -1,10 +1,13 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import ArticleViewSet
+from .views import UsuarioViewSet, LoginViewSet
+from rest_framework import routers
 
-router = DefaultRouter()
-router.register('api', ArticleViewSet)
+router = routers.DefaultRouter()
+router.register('usuario', UsuarioViewSet)
+router.register('login', LoginViewSet, basename='login')
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('usuario/<int:pk>/', UsuarioViewSet.as_view({'put': 'update'}), name='usuario-update')
+
 ]
