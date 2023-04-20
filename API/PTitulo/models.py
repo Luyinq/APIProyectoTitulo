@@ -5,7 +5,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-import re
+import re, random, string, requests
 
 #Validar Rut
 def is_valid_rut(rut):
@@ -37,6 +37,10 @@ def validate_chilean_rut(value):
     if not is_valid_rut(value):
         raise ValidationError("El RUT ingresado no es válido.")
 
+def validate_alphanumeric(value):
+    if not value.isalnum():
+        raise ValidationError('El campo debe contener solo letras o números')
+
 def validate_min(value):
     if len(value) < 2:
         raise ValidationError('El campo debe tener al menos 2 caracteres')
@@ -57,7 +61,7 @@ def validate_password_complexity(value):
 
 #Modelo Usuario
 class Usuario(models.Model):
-    rut = models.CharField(primary_key=True, max_length=9, validators=[validate_chilean_rut,], verbose_name="Rut", help_text="Ingrese rut sin puntos ni guiones")
+    rut = models.CharField(primary_key=True, max_length=9, validators=[validate_chilean_rut, validate_alphanumeric,], verbose_name="Rut", help_text="Ingrese rut sin puntos ni guiones")
     nombre = models.CharField(max_length=20, validators=[validate_min, validate_only_letters], verbose_name="Nombre")
     apellido = models.CharField(max_length=20, validators=[validate_min, validate_only_letters], verbose_name="Apellido")
     contrasena = models.CharField(max_length=20, validators=[validate_password_complexity], verbose_name="Contraseña")
@@ -87,3 +91,34 @@ class Usuario(models.Model):
             self.user = User.objects.create_user(username=self.rut)
         super().save(*args, **kwargs)
         Token.objects.get_or_create(user=self.user)
+    
+    def generate_password(self):
+        while True:
+            # Generar contraseña aleatoria de 8 caracteres
+            contrasena = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+            # Verificar si cumple con los criterios
+            if (len(contrasena) >= 6 and
+                any(char.isupper() for char in contrasena) and
+                any(char.islower() for char in contrasena) and
+                any(char.isdigit() for char in contrasena)):
+                return contrasena
+    
+    def recover_email(self, password):
+        url = 'https://api.emailjs.com/api/v1.0/email/send'
+        data = {
+            'service_id': 'service_7nzmn9h',
+            'template_id': 'template_bl5i8ce',
+            'user_id': 'WQrwC2ydtySqBDjoN',
+            'template_params': {
+                'from_name': "PetCuy",
+                'username': self.nombre + " " + self.apellido,
+                'password': password,
+                'email': self.correo,
+            },
+            'accessToken': 'GvevPGf_fCXSL9kEBvfLS'
+        }
+        response = requests.post(url, json=data)
+        if response.ok:
+            return True
+        else:
+            return False

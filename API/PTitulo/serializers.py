@@ -16,7 +16,6 @@ class UsuarioSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("No se puede modificar el campo 'rut'")
         return super().update(instance, validated_data)
 
-
 class LogInSerializer(serializers.ModelSerializer):
     contrasena = serializers.CharField(write_only=True)
 
@@ -25,9 +24,14 @@ class LogInSerializer(serializers.ModelSerializer):
         fields = ['rut', 'nombre', 'apellido', 'contrasena', 'correo', 'foto', 'celular', 'isActive', 'isAdmin']
         ordering = ['rut', 'nombre', 'apellido', 'contrasena', 'correo', 'foto', 'celular', 'isActive', 'isAdmin', 'token']
 
-
 class TokenSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Token
         fields = ('key', 'created')
+
+class RecoverPasswordSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Usuario
+        fields = ['rut', 'contrasena']
