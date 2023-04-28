@@ -122,3 +122,57 @@ class Usuario(models.Model):
             return True
         else:
             return False
+    
+class TipoMascota(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name="ID")
+    nombre = models.CharField(max_length=50, verbose_name="Nombre", validators=[validate_min, validate_only_letters])
+
+    def __str__(self):
+        return self.nombre
+
+class Estado(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name="ID")
+    nombre = models.CharField(max_length=50, verbose_name="Nombre", validators=[validate_min, validate_only_letters])
+
+    def __str__(self):
+        return self.nombre
+
+class TipoAnuncio(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name="ID")
+    nombre = models.CharField(max_length=50, verbose_name="Nombre", validators=[validate_min, validate_only_letters])
+
+    def __str__(self):
+        return self.nombre
+
+class Mascota(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name="ID")
+    nombre = models.CharField(max_length=50, verbose_name="Nombre", validators=[validate_min, validate_only_letters])
+    foto_1 = models.CharField(max_length=100, verbose_name="Foto 1")
+    foto_2 = models.CharField(max_length=100, default=None, blank=True, verbose_name="Foto 2")
+    tipo = models.ForeignKey(TipoMascota, on_delete=models.CASCADE, verbose_name="Tipo de Mascota")
+    dueno = models.ForeignKey(Usuario, on_delete=models.CASCADE, verbose_name="Dueño")
+
+    def __str__(self):
+        return f"{self.id}, {self.nombre}"
+
+class Posicion(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name="ID")
+    latitud = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="Latitud")
+    longitud = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="Longitud")
+    radio = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Radio")
+    fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
+
+    def __str__(self):
+        return f"{self.latitud}, {self.longitud}"
+
+class Anuncio(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name="ID")
+    descripción = models.CharField(max_length=250, verbose_name="Descripción")
+    fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
+    isDeleted = models.BooleanField(default=False, verbose_name="¿Borrado?")
+    mascota = models.ForeignKey(Mascota, on_delete=models.CASCADE, verbose_name="Mascota")
+    estado = models.ForeignKey(Estado, on_delete=models.CASCADE, verbose_name="Estado")
+    tipo = models.ForeignKey(TipoAnuncio, on_delete=models.CASCADE, verbose_name="Categoría")
+
+    def __str__(self):
+        return f"{self.tipo.nombre} -{self.id} {self.mascota.nombre}"
