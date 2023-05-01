@@ -56,10 +56,11 @@ class EstadoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MascotaSerializer(serializers.ModelSerializer):
-    
+    isActive = serializers.ReadOnlyField()
+
     class Meta:
         model = Mascota
-        fields = '__all__'
+        fields = ['id', 'nombre', 'foto_1', 'foto_2', 'tipo', 'dueno', 'isActive']
 
 class PosicionSerializer(serializers.ModelSerializer):
     
@@ -68,7 +69,18 @@ class PosicionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AnuncioSerializer(serializers.ModelSerializer):
-    
+    mascota = serializers.PrimaryKeyRelatedField(queryset=Mascota.objects.all(), error_messages={
+    'unique': 'Ya existe anuncio con esta mascota.',
+    'required': 'Este campo es requerido.'
+    })
+
     class Meta:
         model = Anuncio
         fields = '__all__'
+
+class ReporteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Reporte
+        fields = ('id', 'nombre', 'descripcion', 'usuario', 'respuesta', 'admin', 'isClosed')
+

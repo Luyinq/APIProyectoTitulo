@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import UsuarioViewSet, LoginViewSet, RecoverPasswordViewSet, TipoMascotaViewSet, TipoAnuncioViewSet, EstadoViewSet
+from .views import UsuarioViewSet, LoginViewSet, RecoverPasswordViewSet, TipoMascotaViewSet, TipoAnuncioViewSet, EstadoViewSet, MascotaViewSet, ReporteViewSet, PosicionViewSet, AnuncioViewSet
 from rest_framework import routers
 
 router = routers.DefaultRouter()
@@ -7,6 +7,10 @@ router.register('usuario', UsuarioViewSet)
 router.register('tipo_mascota', TipoMascotaViewSet)
 router.register('tipo_anuncio', TipoAnuncioViewSet)
 router.register('estado', EstadoViewSet)
+router.register('mascota', MascotaViewSet)
+router.register('reporte', ReporteViewSet)
+router.register('posicion', PosicionViewSet)
+router.register('anuncio', AnuncioViewSet)
 router.register('', LoginViewSet, basename='login')
 router.register('', RecoverPasswordViewSet)
 

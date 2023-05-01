@@ -1,3 +1,5 @@
+from datetime import timedelta
+from django.db.models.signals import post_save
 from itertools import cycle
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -6,6 +8,12 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 import re, random, string, requests
+from django.dispatch import receiver
+from django.db.models.signals import post_save, pre_save
+from django.utils import timezone
+from django_celery_beat.models import CrontabSchedule, PeriodicTask
+
+
 
 #Validar Rut
 def is_valid_rut(rut):
@@ -153,7 +161,31 @@ class Mascota(models.Model):
     dueno = models.ForeignKey(Usuario, on_delete=models.CASCADE, verbose_name="Dueño")
 
     def __str__(self):
-        return f"{self.id}, {self.nombre}"
+        return f"{self.dueno}, {self.id} - {self.nombre}"
+    
+    def isActive(self):
+        return self.dueno.isActive
+
+class Anuncio(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name="ID")
+    descripción = models.CharField(max_length=250, verbose_name="Descripción")
+    fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
+    isDeleted = models.BooleanField(default=False, verbose_name="¿Borrado?")
+    estado = models.ForeignKey(Estado, on_delete=models.CASCADE, verbose_name="Estado")
+    tipo = models.ForeignKey(TipoAnuncio, on_delete=models.CASCADE, verbose_name="Categoría")
+    mascota = models.OneToOneField(Mascota, on_delete=models.CASCADE, verbose_name="Mascota")
+    autor = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='anuncio_autor', verbose_name="Usuario")
+    contacto = models.ForeignKey(Usuario, on_delete=models.SET_NULL, blank=True, null=True, related_name='anuncio_interesado', verbose_name="Contacto")
+
+    def __str__(self):
+        return f"{self.tipo.nombre} -{self.id} {self.mascota.nombre}"
+    
+    @staticmethod
+    def eliminar_anuncios_antiguos():
+        limite_dias = 15
+        limite_fecha = timezone.now() - timedelta(days=limite_dias)
+        anuncios_antiguos = Anuncio.objects.filter(isDeleted=True, fecha__lte=limite_fecha)
+        anuncios_antiguos.delete()
 
 class Posicion(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="ID")
@@ -161,18 +193,19 @@ class Posicion(models.Model):
     longitud = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="Longitud")
     radio = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Radio")
     fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
+    anuncio = models.ForeignKey(Anuncio, on_delete=models.CASCADE, verbose_name="Anuncio")
 
     def __str__(self):
-        return f"{self.latitud}, {self.longitud}"
+        return f"{self.id} - {self.latitud}, {self.longitud}"
 
-class Anuncio(models.Model):
+class Reporte(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="ID")
-    descripción = models.CharField(max_length=250, verbose_name="Descripción")
-    fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
-    isDeleted = models.BooleanField(default=False, verbose_name="¿Borrado?")
-    mascota = models.ForeignKey(Mascota, on_delete=models.CASCADE, verbose_name="Mascota")
-    estado = models.ForeignKey(Estado, on_delete=models.CASCADE, verbose_name="Estado")
-    tipo = models.ForeignKey(TipoAnuncio, on_delete=models.CASCADE, verbose_name="Categoría")
+    nombre = models.CharField(max_length=50, verbose_name="Nombre")
+    descripcion = models.CharField(max_length=250, verbose_name="Descripción")
+    respuesta = models.CharField(max_length=250, blank=True, null=True, verbose_name="Respuesta")
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='reporte_usuario', verbose_name="Usuario")
+    admin = models.ForeignKey(Usuario, on_delete=models.SET_NULL, blank=True, null=True, related_name='reporte_admin', verbose_name="Admin")
+    isClosed = models.BooleanField(default=False, verbose_name="¿Cerrado?")
 
     def __str__(self):
-        return f"{self.tipo.nombre} -{self.id} {self.mascota.nombre}"
+        return f"{self.usuario} ID-{self.id}"

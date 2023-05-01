@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 import os
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,7 +43,16 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'django_celery_beat',
+    'celery'
 ]
+
+CELERY_BEAT_SCHEDULE = {
+    'eliminar_anuncios_borrados': {
+        'task': 'PTitulo.models.Anuncio.eliminar_anuncios_antiguos',
+        'schedule': crontab(hour=0, minute=0),
+    },
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
