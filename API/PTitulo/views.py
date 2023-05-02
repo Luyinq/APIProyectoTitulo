@@ -116,14 +116,19 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         except Http404:
             response_data = {'success': False, 'message': 'El usuario no existe.'}
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
-        if instance != request.user.usuario and not request.user.usuario.isAdmin:
+
+        if request.user.usuario.isAdmin:
+            instance.delete()
+            response_data = {'success': True, 'message': 'Usuario eliminado correctamente.'}
+            return Response(response_data, status=status.HTTP_200_OK)
+        elif instance == request.user.usuario:
+            instance.isActive = False
+            instance.save()
+            response_data = {'success': True, 'message': 'Usuario dado de baja correctamente.'}
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
             return Response({'success': False, 'message': 'No tienes permiso para realizar esta acción'},
                             status=status.HTTP_403_FORBIDDEN)
-        instance = self.get_object()
-        instance.isActive = False
-        instance.save()
-        response_data = {'success': True, 'message': 'Usuario dado de baja correctamente.'}
-        return Response(response_data, status=status.HTTP_200_OK)
 
 class LoginViewSet(viewsets.ViewSet):
     queryset = Usuario.objects.none()
@@ -146,6 +151,8 @@ class LoginViewSet(viewsets.ViewSet):
             response_data = {'success': False, 'message': 'La contraseña no concuerda.'}
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
+        user.isActive = True
+        user.save()
         # crear o recuperar el token
         login_serializer = LogInSerializer(user)
         token_data = Token.objects.filter(user=user.user)
