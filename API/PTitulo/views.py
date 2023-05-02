@@ -597,3 +597,16 @@ class AnuncioViewSet(viewsets.ModelViewSet):
         instance.save()
         response_data = {'success': True, 'message': 'Anuncio eliminado exitosamente'}
         return Response(response_data, status=status.HTTP_204_NO_CONTENT)
+
+
+class RecompensaViewSet(viewsets.ModelViewSet):
+    queryset = Recompensa.objects.all()
+    serializer_class = RecompensaSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+class ReputacionViewSet(viewsets.ModelViewSet):
+    queryset = Reputacion.objects.all()
+    serializer_class = ReputacionSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]

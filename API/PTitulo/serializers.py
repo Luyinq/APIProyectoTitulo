@@ -84,3 +84,14 @@ class ReporteSerializer(serializers.ModelSerializer):
         model = Reporte
         fields = ('id', 'nombre', 'descripcion', 'usuario', 'respuesta', 'admin', 'isClosed')
 
+class RecompensaSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Recompensa
+        fields = '__all__'
+
+class ReputacionSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Reputacion
+        fields = '__all__'

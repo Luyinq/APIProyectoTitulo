@@ -12,6 +12,8 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
+from django.db.models import Max
+from django.db.models.base import ModelBase
 
 
 
@@ -66,6 +68,16 @@ def validate_password_complexity(value):
         raise ValidationError('La contraseña debe contener al menos una letra minúscula.')
     if not re.search(r'[0-9]', value):
         raise ValidationError('La contraseña debe contener al menos un número.')
+
+class MultiFieldPrimary(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            max_id = self.__class__.objects.aggregate(Max('id'))['id__max']
+            self.pk = (max_id or 0) + 1
+        super().save(*args, **kwargs)
 
 #Modelo Usuario
 class Usuario(models.Model):
@@ -209,3 +221,22 @@ class Reporte(models.Model):
 
     def __str__(self):
         return f"{self.usuario} ID-{self.id}"
+    
+class Recompensa(models.Model):
+    id = models.AutoField(primary_key=True)
+    codigo = models.CharField(unique=True, max_length=100)
+    expiracion = models.DateField()
+    descripcion = models.TextField()
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.id} - {self.usuario.rut}"
+
+class Reputacion(MultiFieldPrimary):
+    puntuacion = models.FloatField()
+    comentario = models.TextField()
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reputaciones_recibidas')
+    evaluador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reputaciones_emitidas')
+
+    class Meta:
+        unique_together = ('usuario', 'evaluador')
