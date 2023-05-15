@@ -1,0 +1,6 @@
+sonar.projectKey=API
+sonar.projectName=PTitulo
+sonar.sources=.
+sonar.sourceEncoding=UTF-8
+sonar.host.url=http://localhost:9000
+sonar.login=squ_a21e0fd21a60549952d70b0f29b586ac0128e40e
