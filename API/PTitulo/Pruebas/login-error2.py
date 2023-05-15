@@ -1,22 +1,27 @@
 import requests
 import json
+import os
 
-url = "https://luyinq.pythonanywhere.com/login/"
+url = "http://127.0.0.1:8000/login/"
 data = {
     "rut": "196178309",
-    "contrasena": "6AnwoYlO"
+    "contrasena": "6AnwoYl"
 }
+file_name = os.path.basename(__file__)
 
 response = requests.post(url, data=data)
 
 # Verificar el estado de la respuesta
-assert response.status_code == 200
+assert response.status_code == 400
 
 # Verificar que se recibió el mensaje esperado
-assert "Inicio de sesión exitoso" in response.text
-
+def resultado():
+    if "La contraseña no concuerda" in response.text:
+        return True
+    else:
+        return False
+    
 # Verificar que se recibieron los datos de usuario y token
 response_data = json.loads(response.content.decode('utf-8'))
-assert "data" in response_data
 
-print(response_data['message'])
+print(file_name, resultado())
