@@ -201,8 +201,8 @@ class Anuncio(models.Model):
 
 class Posicion(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="ID")
-    latitud = models.DecimalField(max_digits=11, decimal_places=8, verbose_name="Latitud")
-    longitud = models.DecimalField(max_digits=11, decimal_places=8, verbose_name="Longitud")
+    latitud = models.DecimalField(max_digits=20, decimal_places=20, verbose_name="Latitud")
+    longitud = models.DecimalField(max_digits=20, decimal_places=20, verbose_name="Longitud")
     radio = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Radio")
     fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
     anuncio = models.ForeignKey(Anuncio, on_delete=models.CASCADE, verbose_name="Anuncio")
