@@ -180,7 +180,7 @@ class Mascota(models.Model):
 
 class Anuncio(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="ID")
-    descripción = models.CharField(max_length=250, verbose_name="Descripción")
+    descripcion = models.CharField(max_length=250, verbose_name="Descripción")
     fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
     isDeleted = models.BooleanField(default=False, verbose_name="¿Borrado?")
     estado = models.ForeignKey(Estado, on_delete=models.CASCADE, verbose_name="Estado")
@@ -201,8 +201,8 @@ class Anuncio(models.Model):
 
 class Posicion(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="ID")
-    latitud = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="Latitud")
-    longitud = models.DecimalField(max_digits=9, decimal_places=6, verbose_name="Longitud")
+    latitud = models.DecimalField(max_digits=11, decimal_places=8, verbose_name="Latitud")
+    longitud = models.DecimalField(max_digits=11, decimal_places=8, verbose_name="Longitud")
     radio = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Radio")
     fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
     anuncio = models.ForeignKey(Anuncio, on_delete=models.CASCADE, verbose_name="Anuncio")
