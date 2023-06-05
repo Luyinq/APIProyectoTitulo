@@ -117,11 +117,15 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             response_data = {'success': False, 'message': 'El usuario no existe.'}
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
-        if request.user.usuario.isAdmin:
-            instance.delete()
+        if request.user.usuario.isAdmin and instance != request.user.usuario:
+            user = User.objects.get(username=instance.rut)
+            user.delete()
             response_data = {'success': True, 'message': 'Usuario eliminado correctamente.'}
             return Response(response_data, status=status.HTTP_200_OK)
+        
         elif instance == request.user.usuario:
+            anuncios = Anuncio.objects.get(autor=instance.rut)
+            anuncios.delete()
             instance.isActive = False
             instance.save()
             response_data = {'success': True, 'message': 'Usuario dado de baja correctamente.'}
