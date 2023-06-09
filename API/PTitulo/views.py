@@ -566,31 +566,39 @@ class AnuncioViewSet(viewsets.ModelViewSet):
     
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+
         if 'autor' in request.data:
             return Response({'success': False, 'message': 'No se puede actualizar el campo autor.'},
                             status=status.HTTP_400_BAD_REQUEST)
-        if instance.autor != request.user.usuario and not request.user.usuario.isAdmin:
-            return Response({'success': False, 'message': 'No tienes permiso para modificar este anuncio'},
-                            status=status.HTTP_403_FORBIDDEN)
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+
+        if 'contacto' in request.data and (instance.autor != request.user.usuario or request.user.usuario.isAdmin):
+            # Allow modification of the 'contacto' field if the user is the author or an admin
+            serializer = self.get_serializer(instance, data={'contacto': request.data['contacto']}, partial=True)
+        else:
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+
         serializer.is_valid(raise_exception=True)
         mascota = serializer.validated_data.get('mascota')
+
         if mascota and mascota.dueno.rut != request.user.usuario.rut:
             return Response({'success': False, 'message': 'La mascota seleccionada no concuerda con el usuario'},
                             status=status.HTTP_400_BAD_REQUEST)
-            
-        #Check if any field has changed
+
+        # Check if any field has changed
         data_has_changed = False
         for field_name, value in serializer.validated_data.items():
             if getattr(instance, field_name) != value:
                 data_has_changed = True
                 break
+
         if not data_has_changed:
-            return Response({'success': False, 'message': 'No se ha modificado ningún campo'}, status=status.HTTP_400_BAD_REQUEST)
-         
+            return Response({'success': False, 'message': 'No se ha modificado ningún campo'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         self.perform_update(serializer)
         response_data = {'success': True, 'message': 'Anuncio modificado exitosamente', 'data': serializer.data}
         return Response(response_data, status=status.HTTP_200_OK)
+
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
