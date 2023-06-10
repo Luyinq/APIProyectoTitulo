@@ -8,7 +8,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = ['rut', 'nombre', 'apellido', 'contrasena', 'correo', 'foto', 'celular', 'isActive', 'isAdmin']
+        fields = ['rut', 'nombre', 'apellido', 'contrasena', 'correo', 'foto', 'celular', 'isActive', 'isAdmin', 'msgToken']
         ordering = ['rut', 'nombre', 'apellido', 'contrasena', 'correo', 'foto', 'celular', 'isActive', 'isAdmin']
 
     def update(self, instance, validated_data):
