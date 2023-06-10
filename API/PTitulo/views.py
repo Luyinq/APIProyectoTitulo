@@ -65,7 +65,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
-        
+
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
@@ -77,8 +77,8 @@ class UsuarioViewSet(viewsets.ModelViewSet):
                 'details': error_data
             }
             return Response({'success': False, 'error': error_details}, status=status.HTTP_400_BAD_REQUEST)
-        
-         # check if the user is an admin and the request includes isAdmin
+
+        # Check if the user is an admin and the request includes isAdmin
         if not request.user.usuario.isAdmin and 'isAdmin' in request.data:
             response_data = {'success': False, 'message': 'No tienes permisos para cambiar el atributo isAdmin.'}
             return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
@@ -93,13 +93,26 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             response_data = {'success': False, 'message': 'La información proporcionada es la misma.'}
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
-        # validar que la nueva contraseña no sea igual a la anterior
+        # Validate that the new password is not the same as the previous one
         new_password = request.data.get('contrasena')
         if new_password:
             current_password = instance.contrasena
             if check_password(new_password, current_password):
                 response_data = {'success': False, 'message': 'La nueva contraseña no puede ser igual a la anterior.'}
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+        msg_token = request.data.get('msgToken')
+        if msg_token:
+            # Check if any other user already has the same msgToken
+            other_users = Usuario.objects.exclude(rut=instance.rut).filter(msgToken=msg_token)
+            if other_users.exists():
+                # Remove msgToken from the other user(s)
+                for user in other_users:
+                    user.msgToken = None
+                    user.save()
+
+            instance.msgToken = msg_token
+            instance.save()
 
         instance = serializer.save(force_update=True)
 
