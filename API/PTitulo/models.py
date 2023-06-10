@@ -90,7 +90,7 @@ class Usuario(models.Model):
     celular = models.IntegerField(verbose_name="Celular", validators=[MaxValueValidator(999999999), MinValueValidator(900000000)], unique=True)
     isActive = models.BooleanField(default=True, verbose_name="Activo")
     isAdmin = models.BooleanField(default=False, verbose_name="Admin")
-    msgToken = models.CharField(max_length=256, unique=True, verbose_name="Mensaje Token")
+    msgToken = models.CharField(max_length=256, unique=True, null=True, blank=True, verbose_name="Mensaje Token")
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, verbose_name="User")
 
 
