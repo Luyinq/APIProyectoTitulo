@@ -57,10 +57,14 @@ class EstadoSerializer(serializers.ModelSerializer):
 
 class MascotaSerializer(serializers.ModelSerializer):
     isActive = serializers.ReadOnlyField()
+    haveAnuncio = serializers.SerializerMethodField()
 
     class Meta:
         model = Mascota
-        fields = ['id', 'nombre', 'foto_1', 'foto_2', 'tipo', 'dueno', 'isActive']
+        fields = ['id', 'nombre', 'foto_1', 'foto_2', 'tipo', 'dueno', 'isActive', 'haveAnuncio']
+
+    def get_haveAnuncio(self, mascota):
+        return Anuncio.objects.filter(mascota=mascota).exists()
 
 class PosicionSerializer(serializers.ModelSerializer):
     
@@ -91,7 +95,21 @@ class RecompensaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ReputacionSerializer(serializers.ModelSerializer):
-    
+    promedio = serializers.SerializerMethodField()
+
+
     class Meta:
         model = Reputacion
-        fields = '__all__'
+        fields = ['id', 'puntuacion', 'promedio', 'evaluador', 'usuario']
+
+    def get_promedio(self, obj):
+        # Calculate the average score for the reputation
+        user_reputations = Reputacion.objects.filter(usuario=obj.usuario)
+        total_score = sum(reputation.puntuacion for reputation in user_reputations)
+        count = user_reputations.count()
+
+        if count > 0:
+            promedio = total_score / count
+            return promedio
+
+        return None

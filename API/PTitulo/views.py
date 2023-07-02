@@ -12,6 +12,11 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError
 from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+from .filters import AnuncioFilter, MascotaFilter, ReputacionFilter
+from django.db.models import Avg
+
 
 
 
@@ -376,6 +381,8 @@ class MascotaViewSet(viewsets.ModelViewSet):
     serializer_class = MascotaSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    filterset_class = MascotaFilter  # Asegúrate de haber agregado esta línea correctamente
+
 
     def list(self, request, *args, **kwargs):
         # Obtener el usuario que realiza la solicitud
@@ -386,7 +393,11 @@ class MascotaViewSet(viewsets.ModelViewSet):
         else:
         # Obtener los reportes del usuario
             queryset = Mascota.objects.filter(dueno=user.username)
-        serializer = self.get_serializer(queryset, many=True)
+                # Aplicar el filtro MascotaFilter
+        mascota_filter = MascotaFilter(request.GET, queryset=queryset)
+        filtered_queryset = mascota_filter.qs
+
+        serializer = self.get_serializer(filtered_queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, *args, **kwargs):
@@ -550,6 +561,9 @@ class AnuncioViewSet(viewsets.ModelViewSet):
     serializer_class = AnuncioSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    filterset_class = AnuncioFilter  # Asegúrate de haber agregado esta línea correctamente
+
+
 
     def retrieve(self, request, *args, **kwargs):
         try:
@@ -618,8 +632,7 @@ class AnuncioViewSet(viewsets.ModelViewSet):
         if instance.autor != request.user.usuario and not request.user.usuario.isAdmin:
             return Response({'success': False, 'message': 'No tienes permiso para realizar esta acción'},
                             status=status.HTTP_403_FORBIDDEN)
-        instance.isDeleted = True
-        instance.save()
+        self.perform_destroy(instance)
         response_data = {'success': True, 'message': 'Anuncio eliminado exitosamente'}
         return Response(response_data, status=status.HTTP_204_NO_CONTENT)
 
@@ -630,8 +643,78 @@ class RecompensaViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+
 class ReputacionViewSet(viewsets.ModelViewSet):
     queryset = Reputacion.objects.all()
     serializer_class = ReputacionSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    filterset_class = ReputacionFilter  # Asegúrate de haber agregado esta línea correctamente
+
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except serializers.ValidationError as e:
+            error_message = str(e)
+            if "Los campos usuario, evaluador deben formar un conjunto único." in error_message:
+                # Aquí puedes agregar el código que deseas ejecutar cuando se produce el error
+                response_data = {'success': False, 'message': 'Ya existe una reputación para el usuario y evaluador especificados'}
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                # Si se produce otro tipo de error de validación, se devuelve la respuesta con el error original
+                return Response({'success': False, 'message': error_message}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Resto del código para crear una nueva reputación si no se produjo ninguna excepción de validación
+        self.perform_create(serializer)
+        response_data = {'success': True, 'message': 'Reputación creada exitosamente', 'data': serializer.data}
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', True)
+        instance = self.get_object()
+
+        # Check if the updater is the evaluator or an admin user
+        evaluator = instance.evaluador
+        if evaluator != request.user.usuario and not request.user.usuario.isAdmin:
+            return Response(
+                {'success': False, 'message': 'No tienes permiso para actualizar esta reputación'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        if serializer.is_valid(raise_exception=True):
+            # Verificar si la puntuacion ha cambiado
+            if 'puntuacion' in serializer.validated_data and serializer.validated_data['puntuacion'] != instance.puntuacion:
+                self.perform_update(serializer)
+                response_data = {'success': True, 'message': 'Reputación actualizada exitosamente', 'data': serializer.data}
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                response_data = {'success': False, 'message': 'No has actualizado la puntuación.'}
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Check if the user is authorized to delete the reputation
+        if not request.user.usuario.isAdmin:
+            return Response(
+                {'success': False, 'message': 'No tienes permiso para eliminar esta reputación'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        self.perform_destroy(instance)
+        response_data = {'success': True, 'message': 'Reputación eliminada exitosamente'}
+        return Response(response_data, status=status.HTTP_204_NO_CONTENT)
+    
+
+
+
+
+

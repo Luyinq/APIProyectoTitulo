@@ -2,17 +2,12 @@ import requests
 import json
 import os
 
-url = "http://127.0.0.1:8000/usuario/"
+url = "https://luyinq.pythonanywhere.com/login/"
 data = {
-    "rut": "196178309",
-    "contrasena": "Prueba1234",
-    "nombre": "Juan",
-    "apellido": "Perez",
-    "correo": "lu.alegre@duocuc.cl",
-    "celular": 945924700
+    "rut": "333333333",
+    "contrasena": "6AnwoYlO"
 }
 file_name = os.path.basename(__file__)
-
 
 response = requests.post(url, data=data)
 
@@ -21,10 +16,12 @@ assert response.status_code == 400
 
 # Verificar que se recibió el mensaje esperado
 def resultado():
-    json_response = response.json()
-    if "False" in json_response["success"]:
+    if "El usuario no existe" in response.text:
         return True
     else:
         return False
+
+# Verificar que se recibieron los datos de usuario y token
+response_data = json.loads(response.content.decode('utf-8'))
 
 print(file_name, resultado())

@@ -228,16 +228,18 @@ class Recompensa(models.Model):
     codigo = models.CharField(unique=True, max_length=100)
     expiracion = models.DateField()
     descripcion = models.TextField()
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.id} - {self.usuario.rut}"
 
 class Reputacion(MultiFieldPrimary):
     puntuacion = models.FloatField()
-    comentario = models.TextField()
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reputaciones_recibidas')
-    evaluador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reputaciones_emitidas')
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='reputaciones_recibidas')
+    evaluador = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='reputaciones_emitidas')
 
     class Meta:
         unique_together = ('usuario', 'evaluador')
+
+    def __str__(self):
+        return f"{self.usuario.rut} - {self.evaluador.rut}"

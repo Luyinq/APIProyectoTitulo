@@ -2,7 +2,7 @@ import requests
 import json
 import os
 
-url = "http://127.0.0.1:8000/usuario/"
+url = "https://luyinq.pythonanywhere.com/usuario/"
 data = {
     "rut": "123456789",
     "contrasena": "Prueba1234",
